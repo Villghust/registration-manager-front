@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import React, { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
 import { useParams, useHistory } from "react-router-dom";
 import { TeamsLayout } from "../index";
 import DeleteIcon from "@material-ui/icons/Delete";
@@ -14,10 +14,11 @@ import {
     TextField,
 } from "@material-ui/core";
 
-import { forceUpdate, teamById } from "../api/state";
 import { makeStyles } from "@material-ui/core/styles";
+import Loader from "../../loader";
 import api from "../../../services/api";
-import { snackbar } from "../../globalSnackbar/api/state";
+import { openSnackbar } from "../../../actions/snackbarActions";
+import { getTeams } from "../../../actions/teamActions";
 
 const itemStyles = makeStyles({
     root: {
@@ -37,95 +38,98 @@ export const EditTeam = () => {
     const [addToTeam, setAddToTeam] = useState(false);
     const [addToTeamValue, setAddToTeamValue] = useState("");
 
-    const team = useRecoilValue(teamById(id));
-    const teamUpdate = useSetRecoilState(forceUpdate);
-    const forceTeamUpdate = () => teamUpdate((n) => n + 1);
-    const setSnackbarState = useSetRecoilState(snackbar);
+    const state = useSelector((state) => state.teams);
+    const dispatch = useDispatch();
     const history = useHistory();
+
+    if (state.loading) {
+        return <Loader />;
+    }
+
+    const team = state.teams.find((t) => t._id === id);
 
     const changeAddToTeamValue = (event) => {
         setAddToTeamValue(event.target.value);
     };
 
-    const deleteUser = useCallback(
-        async ({ email }) => {
-            const newUserArray = team.user_list
-                .map((user) => {
-                    if (user.email !== email) {
-                        return { email: user.email };
-                    }
-                })
-                .filter(Boolean);
-            try {
-                await api.put(`/teams/${id}/user-list`, {
-                    user_list: newUserArray,
-                });
-                forceTeamUpdate();
-                setSnackbarState({
-                    open: true,
-                    message: `Usuário removido da equipe ${team.name}`,
-                    status: "success",
-                });
-            } catch (e) {
-                setSnackbarState({
-                    open: true,
-                    message: `Erro ao remover usuário`,
-                    status: "error",
-                });
-            }
-        },
-        //eslint-disable-next-line
-        [team]
-    );
-
-    const addToTeamApiCall = useCallback(
-        async ({ email }) => {
-            const newUserArray = team.user_list.map((user) => {
-                return { email: user.email };
-            });
-            newUserArray.push({ email: email });
-            try {
-                await api.put(`/teams/${id}/user-list`, {
-                    user_list: newUserArray,
-                });
-                setAddToTeamValue("");
-                forceTeamUpdate();
-                setSnackbarState({
-                    open: true,
-                    message: `Usuário incluído na equipe ${team.name}`,
-                    status: "success",
-                });
-            } catch (e) {
-                setSnackbarState({
-                    open: true,
-                    message: "Erro ao remover usuário",
-                    status: "error",
-                });
-            }
-        },
-        //eslint-disable-next-line
-        [team]
-    );
-
-    const deleteTeam = useCallback(async () => {
+    const deleteTeam = async () => {
         try {
             await api.delete(`/teams/${id}`);
-            forceTeamUpdate();
-            setSnackbarState({
-                open: true,
-                message: `Equipe ${team.name} deletada`,
-                status: "success",
-            });
+            dispatch(
+                openSnackbar({
+                    message: "Time deletado com sucesso",
+                    status: "success",
+                })
+            );
+            dispatch(getTeams());
             history.push("/dashboard/manageteam");
         } catch (e) {
-            setSnackbarState({
-                open: true,
-                message: "Falha ao deletar a equipe",
-                status: "error",
-            });
+            dispatch(
+                openSnackbar({
+                    message: "Falha ao deletar o time",
+                    status: "error",
+                })
+            );
         }
-        //eslint-disable-next-line
-    }, [team]);
+    };
+
+    const deleteCompetitor = async ({ email }) => {
+        const userList = team.user_list;
+        // eslint-disable-next-line array-callback-return
+        let newUserList = userList.map((user) => {
+            if (user.email !== email) {
+                return { email: user.email };
+            }
+        });
+        newUserList = newUserList.filter((item) => item);
+        try {
+            await api.put(`/teams/${id}/user-list`, {
+                user_list: [...newUserList],
+            });
+            dispatch(
+                openSnackbar({
+                    message: "Competidor deletado do time com sucesso",
+                    status: "success",
+                })
+            );
+            dispatch(getTeams());
+        } catch (e) {
+            dispatch(
+                openSnackbar({
+                    message: "Erro ao excluir o competidor do time",
+                    status: "error",
+                })
+            );
+        }
+    };
+
+    const addCompetitor = async ({ email }) => {
+        const userList = team.user_list;
+        const newUsers = userList.map((user) => ({
+            email: user.email,
+        }));
+        newUsers.push({ email });
+        try {
+            await api.put(`/teams/${id}/user-list`, {
+                user_list: newUsers,
+            });
+            dispatch(
+                openSnackbar({
+                    message: "Competidor adicionado ao time com sucesso",
+                    status: "success",
+                })
+            );
+            dispatch(getTeams());
+            setAddToTeamValue("");
+        } catch (e) {
+            dispatch(
+                openSnackbar({
+                    message: "Falha ao adicionar o copetidor",
+                    status: "error",
+                })
+            );
+        }
+    };
 
     return (
         <TeamsLayout id={id}>
@@ -138,7 +142,9 @@ export const EditTeam = () => {
                                     <DeleteIcon
                                         classes={{ root: iconClasses.root }}
                                         onClick={() =>
-                                            deleteUser({ email: user.email })
+                                            deleteCompetitor({
+                                                email: user.email,
+                                            })
                                         }
                                     />
                                 </ListItemIcon>
@@ -187,7 +193,7 @@ export const EditTeam = () => {
                             variant="contained"
                             fullWidth
                             onClick={() =>
-                                addToTeamApiCall({ email: addToTeamValue })
+                                addCompetitor({ email: addToTeamValue })
                             }
                         >
                             Adicionar ao time

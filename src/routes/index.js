@@ -6,11 +6,11 @@ import {
     Redirect,
 } from "react-router-dom";
 import SignIn from "../pages/SignIn";
-import SignUp from "../pages/SignUp";
 import { isAuthenticated } from "../util/authentication";
 import { useLocation } from "react-router-dom";
 import Loader from "../components/loader";
 import DashboardRoutes from "./dashboardRoutes";
+import history from "../util/history";
 
 function PrivateRoute({ children, ...rest }) {
     const location = useLocation();
@@ -23,14 +23,11 @@ function PrivateRoute({ children, ...rest }) {
 
 export default function Routes() {
     return (
-        <Router>
+        <Router history={history}>
             <Suspense fallback={<Loader />}>
                 <Switch>
                     <Route exact path="/">
                         <SignIn />
-                    </Route>
-                    <Route exact path="/signup">
-                        <SignUp />
                     </Route>
                     <PrivateRoute path="/dashboard">
                         <DashboardRoutes />

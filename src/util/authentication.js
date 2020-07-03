@@ -23,8 +23,29 @@ export function isReviewer() {
     let userData = window.localStorage.getItem("user");
     if (userData) {
         userData = JSON.parse(userData);
-        const decodedToken = jwt.decode(userData.token);
-        if (decodedToken.reviewer) {
+        if (userData.user.user_type === "reviewer") {
+            return true;
+        }
+    }
+    return false;
+}
+
+export function isCompetitor() {
+    let userData = window.localStorage.getItem("user");
+    if (userData) {
+        userData = JSON.parse(userData);
+        if (userData.user.user_type === "competitor") {
+            return true;
+        }
+    }
+    return false;
+}
+
+export function isAdmin() {
+    let userData = window.localStorage.getItem("user");
+    if (userData) {
+        userData = JSON.parse(userData);
+        if (userData.user.user_type === "admin") {
             return true;
         }
     }

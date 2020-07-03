@@ -1,10 +1,8 @@
 import React from "react";
-import { useRecoilValue } from "recoil";
+import { useSelector } from "react-redux";
 import { Grid, Paper, makeStyles, Typography } from "@material-ui/core";
 
 import { ReactComponent as TeamIcon } from "../../assets/team.svg";
-
-import { teamById } from "./api/state";
 
 const teamPaperStyles = makeStyles((theme) => ({
     root: ({ selectable }) => ({
@@ -21,7 +19,8 @@ const teamPaperStyles = makeStyles((theme) => ({
 export const TeamsLayout = ({ children, id, selectable }) => {
     const teamPaperClasses = teamPaperStyles({ selectable });
 
-    const selectedTeam = useRecoilValue(teamById(id));
+    const teamsState = useSelector((state) => state.teams.teams);
+    const selectedTeam = teamsState.find((t) => t._id === id);
 
     return (
         <Paper classes={{ root: teamPaperClasses.root }}>

@@ -1,20 +1,19 @@
 import React from "react";
-import { useSetRecoilState } from "recoil";
+import { useDispatch } from "react-redux";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
-import Link from "@material-ui/core/Link";
 import Grid from "@material-ui/core/Grid";
+import MenuItem from "@material-ui/core/MenuItem";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import Typography from "@material-ui/core/Typography";
-import Switch from "@material-ui/core/Switch";
 import { makeStyles } from "@material-ui/core/styles";
 import Container from "@material-ui/core/Container";
 import { Formik, Field, Form } from "formik";
 import api from "../services/api";
 import { useHistory } from "react-router-dom";
-import { snackbar } from "../components/globalSnackbar/api/state";
+import { openSnackbar } from "../actions/snackbarActions";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -40,13 +39,26 @@ const initialValues = {
     name: "",
     email: "",
     password: "",
-    reviewer: false,
+    user_type: "",
     course: "",
+};
+
+const SelectUserType = ({ values, setFieldValue, ...rest }) => {
+    const handleChange = (event) => {
+        setFieldValue("user_type", event.target.value, true);
+    };
+
+    return (
+        <TextField onChange={handleChange} value={values.user_type} {...rest}>
+            <MenuItem value="reviewer">Avaliador</MenuItem>
+            <MenuItem value="competitor">Competidor</MenuItem>
+        </TextField>
+    );
 };
 
 export default function SignUp() {
     const classes = useStyles();
-    const setSnackbarState = useSetRecoilState(snackbar);
+    const dispatch = useDispatch();
     const history = useHistory();
 
     async function submitForm({ values }) {
@@ -54,18 +66,20 @@ export default function SignUp() {
             await api.post("/users", {
                 ...values,
             });
-            setSnackbarState({
-                open: true,
-                message: "Usuário cadastrado com sucesso",
-                status: "success",
-            });
-            history.push("/");
+            dispatch(
+                openSnackbar({
+                    message: "Usuário cadastrado com sucesso",
+                    status: "success",
+                })
+            );
+            history.push("/dashboard");
         } catch (e) {
-            setSnackbarState({
-                open: true,
-                message: "Falha ao registrar usuário",
-                status: "error",
-            });
+            dispatch(
+                openSnackbar({
+                    message: "Falha ao registrar usuário",
+                    status: "error",
+                })
+            );
         }
     }
 
@@ -82,7 +96,7 @@ export default function SignUp() {
                     initialValues={initialValues}
                     onSubmit={(values) => submitForm({ values })}
                 >
-                    {({ values }) => (
+                    {({ values, setFieldValue }) => (
                         <Form className={classes.form}>
                             <Grid container spacing={2} alignItems="center">
                                 <Grid item xs={12}>
@@ -117,22 +131,20 @@ export default function SignUp() {
                                         as={TextField}
                                     />
                                 </Grid>
-                                <Grid item xs={6}>
-                                    <Typography>
-                                        <b>Avaliador</b>
-                                    </Typography>
+                                <Grid item xs={12}>
+                                    <Field
+                                        name="user_type"
+                                        label="Tipo do usuário"
+                                        fullWidth
+                                        required
+                                        select
+                                        variant="outlined"
+                                        values={values}
+                                        setFieldValue={setFieldValue}
+                                        component={SelectUserType}
+                                    />
                                 </Grid>
-                                <Grid item xs={6}>
-                                    <Grid container justify="flex-end">
-                                        <Grid item>
-                                            <Field
-                                                name="reviewer"
-                                                as={Switch}
-                                            />
-                                        </Grid>
-                                    </Grid>
-                                </Grid>
-                                {!values.reviewer && (
+                                {values.user_type === "competitor" && (
                                     <Grid item xs={12}>
                                         <Field
                                             variant="outlined"
@@ -157,13 +169,6 @@ export default function SignUp() {
                         </Form>
                     )}
                 </Formik>
-                <Grid container justify="flex-end">
-                    <Grid item>
-                        <Link href="/" variant="body2">
-                            Já tem uma conta? Entrar
-                        </Link>
-                    </Grid>
-                </Grid>
             </div>
         </Container>
     );

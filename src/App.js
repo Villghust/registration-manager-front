@@ -1,16 +1,17 @@
 import React from "react";
-import { RecoilRoot } from "recoil";
+import { Provider } from "react-redux";
 import { CssBaseline } from "@material-ui/core";
 import Routes from "./routes";
 import GlobalSnackbar from "./components/globalSnackbar";
+import store from "./providers/Store";
 
 function App() {
     return (
-        <RecoilRoot>
+        <Provider store={store}>
             <CssBaseline />
             <GlobalSnackbar />
             <Routes />
-        </RecoilRoot>
+        </Provider>
     );
 }
 

@@ -1,59 +1,56 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { Container, Grid, Typography } from "@material-ui/core";
 import { List } from "../../../components/teams/List";
-import { useRecoilState, useSetRecoilState } from "recoil";
-import { forceUpdate, teamsState } from "../../../components/teams/api/state";
+import { useSelector, useDispatch } from "react-redux";
+
+import Loader from "../../../components/loader";
+import { getTeams } from "../../../actions/teamActions";
+import { getUserData } from "../../../util/authentication";
 import api from "../../../services/api";
-import { snackbar } from "../../../components/globalSnackbar/api/state";
-import { getUserData, isReviewer } from "../../../util/authentication";
+import { openSnackbar } from "../../../actions/snackbarActions";
 
 export const JoinTeam = () => {
-    const [teams, setTeams] = useRecoilState(teamsState);
-    const teamUpdate = useSetRecoilState(forceUpdate);
-    const forceTeamUpdate = () => teamUpdate((n) => n + 1);
-    const setSnackbarState = useSetRecoilState(snackbar);
+    const dispatch = useDispatch();
 
-    const getTeamById = (id) => teams.filter((team) => team._id === id)[0];
+    const teamsState = useSelector((state) => state.teams);
 
-    const addToTeam = useCallback(
-        async ({ id }) => {
-            if (isReviewer()) {
-                return setSnackbarState({
-                    open: true,
-                    message: "Avaliadores não podem fazer parte de times",
-                    status: "error",
-                });
-            }
-            const teamInfo = getTeamById(id);
-            const user = getUserData();
-            let userArray = [];
-            teamInfo.user_list.map((user) =>
-                userArray.push({ email: user.email })
-            );
-            userArray.push({
-                email: user.email,
+    if (teamsState.loading) {
+        return <Loader />;
+    }
+
+    if (teamsState.error) {
+        return (
+            <Typography align="center">Erro ao atualizar os times</Typography>
+        );
+    }
+
+    const joinTeam = async (id) => {
+        const userEmail = getUserData().email;
+        const selectedTeam = teamsState.teams.find((t) => t._id === id);
+        const newUserList = selectedTeam.user_list.map((user) => ({
+            email: user.email,
+        }));
+        newUserList.push({ email: userEmail });
+        try {
+            await api.put(`/teams/${id}/user-list`, {
+                user_list: newUserList,
             });
-            try {
-                await api.put(`/teams/${teamInfo._id}/user-list`, {
-                    user_list: userArray,
-                });
-                forceTeamUpdate();
-                setSnackbarState({
-                    open: true,
-                    message: `Registrado ao ${teamInfo.name}`,
+            dispatch(
+                openSnackbar({
+                    message: "Você entrou no time",
                     status: "success",
-                });
-            } catch (e) {
-                setSnackbarState({
-                    open: true,
-                    message: "Erro ao entrar no time",
+                })
+            );
+            dispatch(getTeams());
+        } catch (e) {
+            dispatch(
+                openSnackbar({
+                    message: "Falha ao entrar no tiem",
                     status: "error",
-                });
-            }
-        },
-        //eslint-disable-next-line
-        [setTeams]
-    );
+                })
+            );
+        }
+    };
 
     return (
         <Container maxWidth="lg">
@@ -65,15 +62,23 @@ export const JoinTeam = () => {
                 </Grid>
                 <Grid item xs={12}>
                     <Grid container spacing={4} justify="center">
-                        {teams.map((team) => (
-                            <Grid
-                                item
-                                key={team._id}
-                                onClick={() => addToTeam({ id: team._id })}
-                            >
-                                <List team={team} selectable />
+                        {teamsState.teams.length > 0 ? (
+                            teamsState.teams.map((team) => (
+                                <Grid
+                                    item
+                                    key={team._id}
+                                    onClick={() => joinTeam(team._id)}
+                                >
+                                    <List team={team} selectable />
+                                </Grid>
+                            ))
+                        ) : (
+                            <Grid item>
+                                <Typography align="center" variant="h6">
+                                    Não há times registrados
+                                </Typography>
                             </Grid>
-                        ))}
+                        )}
                     </Grid>
                 </Grid>
             </Grid>

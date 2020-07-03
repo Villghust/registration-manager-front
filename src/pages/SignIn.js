@@ -1,11 +1,9 @@
 import React from "react";
-import { useSetRecoilState } from "recoil";
+import { useDispatch } from "react-redux";
 
 import Avatar from "@material-ui/core/Avatar";
 import Button from "@material-ui/core/Button";
 import TextField from "@material-ui/core/TextField";
-import Link from "@material-ui/core/Link";
-import Grid from "@material-ui/core/Grid";
 import LockOutlinedIcon from "@material-ui/icons/LockOutlined";
 import Typography from "@material-ui/core/Typography";
 import { makeStyles } from "@material-ui/core/styles";
@@ -14,8 +12,7 @@ import { Form, Formik, Field } from "formik";
 import api from "../services/api";
 
 import { useHistory } from "react-router-dom";
-
-import { snackbar } from "../components/globalSnackbar/api/state";
+import { openSnackbar } from "../actions/snackbarActions";
 
 const useStyles = makeStyles((theme) => ({
     paper: {
@@ -44,7 +41,7 @@ const initialValues = {
 
 export default function SignIn() {
     const classes = useStyles();
-    const setSnackbarState = useSetRecoilState(snackbar);
+    const dispatch = useDispatch();
     const history = useHistory();
 
     async function submitForm({ values }) {
@@ -52,19 +49,21 @@ export default function SignIn() {
             const response = await api.post("/sessions", {
                 ...values,
             });
-            setSnackbarState({
-                open: true,
-                message: "Usuário logado, bem vindo!",
-                status: "success",
-            });
+            dispatch(
+                openSnackbar({
+                    message: "Usuário logado, bem vindo!",
+                    status: "success",
+                })
+            );
             window.localStorage.setItem("user", JSON.stringify(response.data));
             history.push("/dashboard");
         } catch (e) {
-            setSnackbarState({
-                open: true,
-                message: "Falha ao fazer login. Tente novamente.",
-                status: "error",
-            });
+            dispatch(
+                openSnackbar({
+                    message: "Falha ao fazer login. Tente novamente.",
+                    status: "error",
+                })
+            );
         }
     }
 
@@ -112,13 +111,6 @@ export default function SignIn() {
                         </Button>
                     </Form>
                 </Formik>
-                <Grid container justify="flex-end">
-                    <Grid item>
-                        <Link href="/signup" variant="body2">
-                            {"Ainda não tem uma conta? Cadastrar"}
-                        </Link>
-                    </Grid>
-                </Grid>
             </div>
         </Container>
     );

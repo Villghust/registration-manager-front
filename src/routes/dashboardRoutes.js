@@ -1,20 +1,23 @@
 import React from "react";
-import { useSetRecoilState } from "recoil";
+import { useDispatch, useSelector } from "react-redux";
 import { Switch, Route, useLocation, Redirect } from "react-router-dom";
 import { makeStyles } from "@material-ui/core/styles";
 import { AppBar, Toolbar, IconButton } from "@material-ui/core";
 import { Menu as MenuIcon } from "@material-ui/icons";
 
-import { drawerState } from "../components/drawer/api/state";
 import Drawer from "../components/drawer";
 import Dashboard from "../pages/dashboard";
 import { JoinTeam } from "../pages/dashboard/joinTeam";
 import { CreateTeam } from "../pages/dashboard/createTeam";
-import { isReviewer } from "../util/authentication";
+import { isAdmin, isCompetitor, isReviewer } from "../util/authentication";
 import ManageTeam from "../pages/dashboard/manageTeam";
 import { ManageSelectedTeam } from "../pages/dashboard/manageTeam/selectedTeam";
 import { ReviewTeam } from "../pages/dashboard/reviewTeam";
 import { ReviewSelectedTeam } from "../pages/dashboard/reviewTeam/selectedTeam";
+import useUpdateTeams from "../hooks/useUpdateTeams";
+import { setDashboardDrawer } from "../actions/drawerActions";
+import { Ranking } from "../pages/dashboard/ranking";
+import SignUp from "../pages/SignUp";
 
 const drawerWidth = 240;
 
@@ -50,9 +53,30 @@ function ReviewerRoute({ children, ...rest }) {
     );
 }
 
+function AdminRoute({ children, ...rest }) {
+    const location = useLocation();
+    return isAdmin() ? (
+        <Route {...rest}>{children}</Route>
+    ) : (
+        <Redirect to={{ pathname: "/dashboard", state: { from: location } }} />
+    );
+}
+
+function CompetitorRoute({ children, ...rest }) {
+    const location = useLocation();
+    return isCompetitor() ? (
+        <Route {...rest}>{children}</Route>
+    ) : (
+        <Redirect to={{ pathname: "/dashboard", state: { from: location } }} />
+    );
+}
+
 export default function DashboardRoutes() {
     const classes = useStyles();
-    const setDrawer = useSetRecoilState(drawerState);
+    const drawerState = useSelector((state) => state.drawer.open);
+    const dispatch = useDispatch();
+
+    useUpdateTeams();
 
     return (
         <div className={classes.root}>
@@ -62,7 +86,9 @@ export default function DashboardRoutes() {
                         color="inherit"
                         edge="start"
                         className={classes.menuButton}
-                        onClick={() => setDrawer((previous) => !previous)}
+                        onClick={() =>
+                            dispatch(setDashboardDrawer(!drawerState))
+                        }
                     >
                         <MenuIcon />
                     </IconButton>
@@ -75,23 +101,29 @@ export default function DashboardRoutes() {
                     <Route exact path="/dashboard">
                         <Dashboard />
                     </Route>
-                    <Route exact path="/dashboard/jointeam">
+                    <CompetitorRoute exact path="/dashboard/jointeam">
                         <JoinTeam />
-                    </Route>
-                    <Route exact path="/dashboard/createteam">
+                    </CompetitorRoute>
+                    <CompetitorRoute exact path="/dashboard/createteam">
                         <CreateTeam />
-                    </Route>
-                    <ReviewerRoute exact path="/dashboard/manageteam">
+                    </CompetitorRoute>
+                    <AdminRoute exact path="/dashboard/manageteam">
                         <ManageTeam />
-                    </ReviewerRoute>
-                    <ReviewerRoute exact path="/dashboard/manageteam/:id">
+                    </AdminRoute>
+                    <AdminRoute exact path="/dashboard/manageteam/:id">
                         <ManageSelectedTeam />
-                    </ReviewerRoute>
+                    </AdminRoute>
+                    <AdminRoute exact path="/dashboard/createuser">
+                        <SignUp />
+                    </AdminRoute>
                     <ReviewerRoute exact path="/dashboard/reviewteam">
                         <ReviewTeam />
                     </ReviewerRoute>
                     <ReviewerRoute exact path="/dashboard/reviewteam/:id">
                         <ReviewSelectedTeam />
+                    </ReviewerRoute>
+                    <ReviewerRoute exact path="/dashboard/ranking">
+                        <Ranking />
                     </ReviewerRoute>
                 </Switch>
             </main>

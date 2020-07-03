@@ -1,5 +1,5 @@
 import React from "react";
-import { useRecoilState } from "recoil";
+import { useSelector, useDispatch } from "react-redux";
 import { makeStyles } from "@material-ui/core/styles";
 import { useHistory } from "react-router-dom";
 import {
@@ -11,8 +11,13 @@ import {
     Drawer as MuiDrawer,
 } from "@material-ui/core";
 
-import { drawerState } from "./api/state";
-import { isReviewer, logout } from "../../util/authentication";
+import {
+    isReviewer,
+    isCompetitor,
+    logout,
+    isAdmin,
+} from "../../util/authentication";
+import { setDashboardDrawer } from "../../actions/drawerActions";
 
 const drawerWidth = 240;
 
@@ -33,56 +38,95 @@ const useStyles = makeStyles((theme) => ({
 export default function Drawer({ window }) {
     const classes = useStyles();
     const history = useHistory();
-    const [mobileOpen, setMobileOpen] = useRecoilState(drawerState);
+    const state = useSelector((state) => state.drawer.open);
+    const dispatch = useDispatch();
 
     const handleDrawerToggle = () => {
-        setMobileOpen(!mobileOpen);
+        dispatch(setDashboardDrawer(!state));
     };
 
     const navigateToPage = (page) => {
         history.push(page);
-        setMobileOpen(false);
+        dispatch(setDashboardDrawer(false));
     };
+
+    const reviewerDrawer = (
+        <div>
+            <div className={classes.toolbar} />
+            <Divider />
+            <List>
+                <ListItem
+                    button
+                    onClick={() => navigateToPage("/dashboard/reviewteam")}
+                >
+                    <ListItemText primary="Avaliar time" />
+                </ListItem>
+                <ListItem
+                    button
+                    onClick={() => navigateToPage("/dashboard/ranking")}
+                >
+                    <ListItemText primary="Ranking" />
+                </ListItem>
+                <ListItem
+                    button
+                    onClick={() => {
+                        logout();
+                        navigateToPage("/");
+                    }}
+                >
+                    <ListItemText primary="Sair" />
+                </ListItem>
+            </List>
+        </div>
+    );
+
+    const adminDrawer = (
+        <div>
+            <div className={classes.toolbar} />
+            <Divider />
+            <List>
+                <ListItem
+                    button
+                    onClick={() => navigateToPage("/dashboard/createuser")}
+                >
+                    <ListItemText primary="Criar usuário" />
+                </ListItem>
+                <ListItem
+                    button
+                    onClick={() => navigateToPage("/dashboard/manageteam")}
+                >
+                    <ListItemText primary="Gerenciar times" />
+                </ListItem>
+                <ListItem
+                    button
+                    onClick={() => {
+                        logout();
+                        navigateToPage("/");
+                    }}
+                >
+                    <ListItemText primary="Sair" />
+                </ListItem>
+            </List>
+        </div>
+    );
 
     const drawer = (
         <div>
             <div className={classes.toolbar} />
             <Divider />
             <List>
-                {!isReviewer() && (
-                    <ListItem
-                        button
-                        onClick={() => navigateToPage("/dashboard/jointeam")}
-                    >
-                        <ListItemText primary="Entrar em um time" />
-                    </ListItem>
-                )}
+                <ListItem
+                    button
+                    onClick={() => navigateToPage("/dashboard/jointeam")}
+                >
+                    <ListItemText primary="Entrar em um time" />
+                </ListItem>
                 <ListItem
                     button
                     onClick={() => navigateToPage("/dashboard/createteam")}
                 >
                     <ListItemText primary="Criar um time" />
                 </ListItem>
-                {isReviewer() && (
-                    <>
-                        <ListItem
-                            button
-                            onClick={() =>
-                                navigateToPage("/dashboard/manageteam")
-                            }
-                        >
-                            <ListItemText primary="Gerenciar times" />
-                        </ListItem>
-                        <ListItem
-                            button
-                            onClick={() =>
-                                navigateToPage("/dashboard/reviewteam")
-                            }
-                        >
-                            <ListItemText primary="Avaliar time" />
-                        </ListItem>
-                    </>
-                )}
                 <ListItem
                     button
                     onClick={() => {
@@ -106,7 +150,7 @@ export default function Drawer({ window }) {
                     container={container}
                     variant="temporary"
                     anchor="left"
-                    open={mobileOpen}
+                    open={state}
                     onClose={handleDrawerToggle}
                     classes={{
                         paper: classes.drawerPaper,
@@ -126,7 +170,9 @@ export default function Drawer({ window }) {
                     variant="permanent"
                     open
                 >
-                    {drawer}
+                    {isReviewer() && reviewerDrawer}
+                    {isCompetitor() && drawer}
+                    {isAdmin() && adminDrawer}
                 </MuiDrawer>
             </Hidden>
         </nav>

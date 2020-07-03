@@ -1,15 +1,17 @@
-import React, { useCallback } from "react";
-import { useRecoilValue, useSetRecoilState } from "recoil";
+import React from "react";
 import { TeamsLayout } from "../index";
-import { useParams, useHistory } from "react-router-dom";
+import { useParams } from "react-router-dom";
 
 import { Button, Grid, Typography } from "@material-ui/core";
 import { Rating } from "@material-ui/lab";
 
-import { forceUpdate, teamById } from "../api/state";
 import api from "../../../services/api";
-import { snackbar } from "../../globalSnackbar/api/state";
 import { Form, Formik, Field } from "formik";
+import { useDispatch, useSelector } from "react-redux";
+import { openSnackbar } from "../../../actions/snackbarActions";
+import { getTeams } from "../../../actions/teamActions";
+import { getUserData } from "../../../util/authentication";
+import Loader from "../../loader";
 
 const ratings = [
     {
@@ -37,13 +39,20 @@ const ratings = [
 export const ReviewTeam = () => {
     const { id } = useParams();
 
-    const team = useRecoilValue(teamById(id));
-    const teamUpdate = useSetRecoilState(forceUpdate);
-    const forceTeamUpdate = () => teamUpdate((n) => n + 1);
-    const setSnackbarState = useSetRecoilState(snackbar);
+    const state = useSelector((state) => state.teams);
+    const dispatch = useDispatch();
 
-    const initialReviewValues = team.rating
-        ? team.rating
+    if (state.loading) {
+        return <Loader />;
+    }
+
+    const team = state.teams.find((t) => t._id === id);
+
+    const user = getUserData();
+    const reviewerRating = team.ratings.find((r) => r.reviewer_id === user.id);
+
+    const initialReviewValues = reviewerRating
+        ? reviewerRating
         : {
               software: null,
               process: null,
@@ -57,18 +66,20 @@ export const ReviewTeam = () => {
             await api.put(`/teams/${id}/rating`, {
                 rating: values,
             });
-            forceTeamUpdate();
-            setSnackbarState({
-                open: true,
-                message: "Avaliação salva com sucesso",
-                status: "success",
-            });
+            dispatch(getTeams());
+            dispatch(
+                openSnackbar({
+                    message: "Avaliação salva com sucesso",
+                    status: "success",
+                })
+            );
         } catch (e) {
-            setSnackbarState({
-                open: true,
-                message: "Erro ao avaliar o time",
-                status: "error",
-            });
+            dispatch(
+                openSnackbar({
+                    message: "Erro ao avaliar o time",
+                    status: "error",
+                })
+            );
         }
     };
 
@@ -80,8 +91,8 @@ export const ReviewTeam = () => {
             >
                 <Form>
                     <Grid container spacing={2}>
-                        {ratings.map((rating) => (
-                            <Grid item xs={12}>
+                        {ratings.map((rating, index) => (
+                            <Grid item xs={12} key={index}>
                                 <Typography align="center">
                                     {rating.name}
                                 </Typography>
@@ -90,7 +101,7 @@ export const ReviewTeam = () => {
                                 </div>
                             </Grid>
                         ))}
-                        <Grid item>
+                        <Grid item xs={12}>
                             <Button
                                 color="primary"
                                 type="submit"
