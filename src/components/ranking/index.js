@@ -1,5 +1,6 @@
 import React from "react";
 import {
+    Container,
     ExpansionPanel,
     ExpansionPanelSummary,
     ExpansionPanelDetails,
@@ -43,91 +44,142 @@ export const RankingComponent = () => {
         return average / ratings.length;
     };
 
-    return sortedTeams.map((team) => (
-        <ExpansionPanel
-            key={team._id}
-            classes={{ root: classes.expansionPanel }}
-        >
-            <ExpansionPanelSummary>
-                <Grid container>
-                    <Grid item xs={6}>
-                        <Typography>{team.name}</Typography>
+    return (
+        <Container maxWidth="lg">
+            <Grid container spacing={2}>
+                {sortedTeams.map((team) => (
+                    <Grid item xs={12} key={team._id}>
+                        <ExpansionPanel
+                            classes={{ root: classes.expansionPanel }}
+                        >
+                            <ExpansionPanelSummary>
+                                <Grid container>
+                                    <Grid item xs={6}>
+                                        <Typography>{team.name}</Typography>
+                                    </Grid>
+                                    <Grid item xs={6}>
+                                        <Grid container spacing={2}>
+                                            <Grid
+                                                item
+                                                xs={10}
+                                                container
+                                                justify="flex-end"
+                                            >
+                                                <Rating
+                                                    value={Number(
+                                                        team.final_rating
+                                                    )}
+                                                    readOnly
+                                                    precision={0.01}
+                                                />
+                                            </Grid>
+                                            <Grid item xs={2}>
+                                                <Typography>
+                                                    {team.final_rating}
+                                                </Typography>
+                                            </Grid>
+                                        </Grid>
+                                    </Grid>
+                                </Grid>
+                            </ExpansionPanelSummary>
+                            <ExpansionPanelDetails>
+                                <Grid container justify="center">
+                                    <Grid
+                                        item
+                                        xs={2}
+                                        container
+                                        justify="center"
+                                    >
+                                        <Typography align="center">
+                                            Software
+                                        </Typography>
+                                        <Rating
+                                            value={ratingAverage({
+                                                ratings: team.ratings,
+                                                attribute: "software",
+                                            })}
+                                            readOnly
+                                            precision={0.01}
+                                        />
+                                    </Grid>
+                                    <Grid
+                                        item
+                                        xs={2}
+                                        container
+                                        justify="center"
+                                    >
+                                        <Typography align="center">
+                                            Processo
+                                        </Typography>
+                                        <Rating
+                                            value={ratingAverage({
+                                                ratings: team.ratings,
+                                                attribute: "process",
+                                            })}
+                                            readOnly
+                                            precision={0.01}
+                                        />
+                                    </Grid>
+                                    <Grid
+                                        item
+                                        xs={2}
+                                        container
+                                        justify="center"
+                                    >
+                                        <Typography align="center">
+                                            Pitch
+                                        </Typography>
+                                        <Rating
+                                            value={ratingAverage({
+                                                ratings: team.ratings,
+                                                attribute: "pitch",
+                                            })}
+                                            readOnly
+                                            precision={0.01}
+                                        />
+                                    </Grid>
+                                    <Grid
+                                        item
+                                        xs={2}
+                                        container
+                                        justify="center"
+                                    >
+                                        <Typography align="center">
+                                            Inovação
+                                        </Typography>
+                                        <Rating
+                                            value={ratingAverage({
+                                                ratings: team.ratings,
+                                                attribute: "innovation",
+                                            })}
+                                            readOnly
+                                            precision={0.01}
+                                        />
+                                    </Grid>
+                                    <Grid
+                                        item
+                                        xs={2}
+                                        container
+                                        justify="center"
+                                    >
+                                        <Typography align="center">
+                                            Equipe
+                                        </Typography>
+                                        <Rating
+                                            value={ratingAverage({
+                                                ratings: team.ratings,
+                                                attribute: "team_formation",
+                                            })}
+                                            readOnly
+                                            precision={0.01}
+                                        />
+                                    </Grid>
+                                </Grid>
+                            </ExpansionPanelDetails>
+                        </ExpansionPanel>
                     </Grid>
-                    <Grid item xs={6}>
-                        <Grid container spacing={2}>
-                            <Grid item xs={10} container justify="flex-end">
-                                <Rating
-                                    value={Number(team.final_rating)}
-                                    readOnly
-                                    precision={0.01}
-                                />
-                            </Grid>
-                            <Grid item xs={2}>
-                                <Typography>{team.final_rating}</Typography>
-                            </Grid>
-                        </Grid>
-                    </Grid>
-                </Grid>
-            </ExpansionPanelSummary>
-            <ExpansionPanelDetails>
-                <Grid container justify="center">
-                    <Grid item xs={2}>
-                        <Typography align="center">Software</Typography>
-                        <Rating
-                            value={ratingAverage({
-                                ratings: team.ratings,
-                                attribute: "software",
-                            })}
-                            readOnly
-                            precision={0.01}
-                        />
-                    </Grid>
-                    <Grid item xs={2}>
-                        <Typography align="center">Processo</Typography>
-                        <Rating
-                            value={ratingAverage({
-                                ratings: team.ratings,
-                                attribute: "process",
-                            })}
-                            readOnly
-                            precision={0.01}
-                        />
-                    </Grid>
-                    <Grid item xs={2}>
-                        <Typography align="center">Pitch</Typography>
-                        <Rating
-                            value={ratingAverage({
-                                ratings: team.ratings,
-                                attribute: "pitch",
-                            })}
-                            readOnly
-                            precision={0.01}
-                        />
-                    </Grid>
-                    <Grid item xs={2}>
-                        <Typography align="center">Inovação</Typography>
-                        <Rating
-                            value={ratingAverage({
-                                ratings: team.ratings,
-                                attribute: "innovation",
-                            })}
-                            readOnly
-                            precision={0.01}
-                        />
-                    </Grid>
-                    <Grid item xs={2}>
-                        <Typography align="center">Equipe</Typography>
-                        <Rating
-                            value={ratingAverage({
-                                ratings: team.ratings,
-                                attribute: "team_formation",
-                            })}
-                            readOnly
-                            precision={0.01}
-                        />
-                    </Grid>
-                </Grid>
-            </ExpansionPanelDetails>
-        </ExpansionPanel>
-    ));
+                ))}
+            </Grid>
+        </Container>
+    );
 };
