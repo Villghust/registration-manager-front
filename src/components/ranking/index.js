@@ -35,7 +35,7 @@ export const RankingComponent = () => {
     }));
 
     const sortedTeams = fixedRating.sort(
-        (a, b) => b.final_rating - a.final_rating
+        (a, b) => a.final_rating - b.final_rating
     );
 
     const ratingAverage = ({ ratings, attribute }) => {
